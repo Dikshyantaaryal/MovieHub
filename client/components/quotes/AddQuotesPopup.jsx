@@ -40,25 +40,24 @@ const customStyles = {
 };
 
 function AddQuotesPopup() {
-  const [allQuotes, setAllQuotes] = useState([]);
   const { showQuotesPopup, setShowQuotesPopup } =
     useContext(QuotesPopupContext);
   const router = useRouter();
-
-  // const moviesOptions = allMovies.map((singleMovie) => {
-  //   return {
-  //     value: singleMovie.movie_name,
-  //     label: singleMovie.movie_name,
-  //   };
-  // });
-
-  useEffect(() => {
-    const fetchQuotes = async () => {
-      const response = await axios.get("http://localhost:3001/quotes");
-      setAllQuotes(response.data);
+  const [allRoles, setAllRoles] = useState([]);
+  const roleOptions = allRoles.map((singleRole) => {
+    return {
+      value: singleRole.role_played,
+      label: singleRole.role_played,
     };
-    fetchQuotes();
+  });
+  useEffect(() => {
+    const fetchRoles = async () => {
+      const response = await axios.get("http://localhost:3001/casts");
+      setAllRoles(response.data);
+    };
+    fetchRoles();
   }, []);
+
   return (
     <>
       <ToastContainer autoClose={3000} />
@@ -72,7 +71,6 @@ function AddQuotesPopup() {
             }}
             validationSchema={requiredSchema}
             onSubmit={async (values) => {
-              console.log(values);
               try {
                 const response = await axios.post(
                   "http://localhost:3001/quotes",
@@ -92,34 +90,36 @@ function AddQuotesPopup() {
               return (
                 <Form className="space-y-3">
                   <div className="space-y-2">
-                    <label htmlFor="">Role Played</label>
+                    <div className="flex flex-col space-y-2">
+                      <label htmlFor="">Role Played</label>
+                      <Select
+                        options={roleOptions}
+                        onChange={(selectedOption) => {
+                          setFieldValue("role_played", selectedOption.value);
+                        }}
+                        styles={customStyles}
+                      />
+                    </div>
+                    <ErrorMessage
+                      name="company_name"
+                      component="p"
+                      className="text-red-400"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label htmlFor="">Quote</label>
                     <Field
-                      type="text"
-                      name="role_played"
-                      autoComplete="off"
-                      className="w-full px-3 py-2 border-none bg-gray-800 outline-none"
+                      as="textarea"
+                      name="quote"
+                      className="w-full px-3 py-2 border-none bg-gray-800 outline-none min-h-[120px] resize-none"
                     ></Field>
                     <ErrorMessage
-                      name="role_played"
+                      name="quote"
                       component="p"
                       className="text-red-400"
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <label htmlFor="">Quote</label>
-                    <Field
-                      type="text"
-                      name="quote"
-                      autoComplete="off"
-                      className="w-full px-3 py-2 border-none bg-gray-800 outline-none"
-                    ></Field>
-                    <ErrorMessage
-                      name="quote"
-                      component="p"
-                      className="text-red-400"
-                    />
-                  </div>
                   <div className="text-gray-900 font-bold grid sm:grid-cols-2 gap-2">
                     <button
                       className="px-5 py-4 rounded-md bg-green-400 w-full"
@@ -130,7 +130,7 @@ function AddQuotesPopup() {
                     <button
                       className="px-5 py-4 rounded-md bg-orange-400 w-full"
                       onClick={() => {
-                        setShowActorPopup(false);
+                        setShowQuotesPopup(false);
                       }}
                     >
                       Cancel

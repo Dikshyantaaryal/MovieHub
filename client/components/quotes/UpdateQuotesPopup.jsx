@@ -6,15 +6,15 @@ import * as Yup from "yup";
 import Select from "react-select";
 import axios from "axios";
 import "react-toastify/dist/ReactToastify.css";
-import DirectorPopupContext from "../contexts/DirectorPopupContext";
+import QuotesPopupContext from "../contexts/QuotesPopupContext";
+import slugify from "slugify";
 
 /**
  * Validation Schema added.
  */
 const requiredSchema = Yup.object({
-  director_name: Yup.string().required(),
-  director_DOB: Yup.string().required(),
-  movie_name: Yup.string().required(),
+  role_played: Yup.string().required(),
+  quote: Yup.string().required(),
 });
 
 /**
@@ -40,26 +40,26 @@ const customStyles = {
   }),
 };
 
-function AddDirectorPopup() {
-  const [allMovies, setAllMovies] = useState([]);
-  const { showDirectorPopup, setShowDirectorPopup } =
-    useContext(DirectorPopupContext);
+function UpdateQuotesPopup({ singleQuote, handleShowUpdatePopup }) {
+  const quoteSlug = slugify(singleQuote.role_played);
+  const { showQuotesPopup, setShowQuotesPopup } =
+    useContext(QuotesPopupContext);
   const router = useRouter();
-
-  const moviesOptions = allMovies.map((singleMovie) => {
+  const [allRoles, setAllRoles] = useState([]);
+  const roleOptions = allRoles.map((singleRole) => {
     return {
-      value: singleMovie.movie_name,
-      label: singleMovie.movie_name,
+      value: singleRole.role_played,
+      label: singleRole.role_played,
     };
   });
-
   useEffect(() => {
-    const fetchMovies = async () => {
-      const response = await axios.get("http://localhost:3001/movies");
-      setAllMovies(response.data);
+    const fetchRoles = async () => {
+      const response = await axios.get("http://localhost:3001/casts");
+      setAllRoles(response.data);
     };
-    fetchMovies();
+    fetchRoles();
   }, []);
+
   return (
     <>
       <ToastContainer autoClose={3000} />
@@ -68,24 +68,23 @@ function AddDirectorPopup() {
           {/* All about the form to add the movie */}
           <Formik
             initialValues={{
-              director_name: "",
-              director_DOB: "",
-              movie_name: "",
+              role_played: singleQuote.role_played,
+              quote: singleQuote.quote,
             }}
             validationSchema={requiredSchema}
             onSubmit={async (values) => {
               try {
-                const response = await axios.post(
-                  "http://localhost:3001/directors",
+                const response = await axios.put(
+                  `http://localhost:3001/quotes/${quoteSlug}`,
                   values
                 );
-                toast.success("Director added successfully!", {
+                toast.success("Quotes updated successfully!", {
                   onClose: setTimeout(() => {
-                    router.reload("/directors");
+                    router.reload("/quotes");
                   }, 3500),
                 });
               } catch {
-                toast.error("Failed to add director.");
+                toast.error("Failed to add quote.");
               }
             }}
           >
@@ -93,51 +92,37 @@ function AddDirectorPopup() {
               return (
                 <Form className="space-y-3">
                   <div className="space-y-2">
-                    <label htmlFor="">Director Name</label>
-                    <Field
-                      type="text"
-                      name="director_name"
-                      autoComplete="off"
-                      className="w-full px-3 py-2 border-none bg-gray-800 outline-none"
-                    ></Field>
+                    <div className="flex flex-col space-y-2">
+                      <label htmlFor="">Role Played</label>
+                      <Select
+                        options={roleOptions}
+                        onChange={(selectedOption) => {
+                          setFieldValue("role_played", selectedOption.value);
+                        }}
+                        styles={customStyles}
+                        isDisabled
+                      />
+                    </div>
                     <ErrorMessage
-                      name="director_name"
+                      name="company_name"
                       component="p"
                       className="text-red-400"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label htmlFor="">Director DOB</label>
+                    <label htmlFor="">Quote</label>
                     <Field
-                      type="text"
-                      name="director_DOB"
-                      autoComplete="off"
-                      className="w-full px-3 py-2 border-none bg-gray-800 outline-none"
+                      as="textarea"
+                      name="quote"
+                      className="w-full px-3 py-2 border-none bg-gray-800 outline-none min-h-[120px] resize-none"
                     ></Field>
                     <ErrorMessage
-                      name="director_DOB"
+                      name="quote"
                       component="p"
                       className="text-red-400"
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <div className="space-y-2 flex flex-col">
-                      <label htmlFor="">Movies Directed</label>
-                      <Select
-                        options={moviesOptions}
-                        styles={customStyles}
-                        onChange={(selectedOption) => {
-                          setFieldValue("movie_name", selectedOption.value);
-                        }}
-                      />
-                    </div>
-                    <ErrorMessage
-                      name="movie_name"
-                      component="p"
-                      className="text-red-400"
-                    />
-                  </div>
                   <div className="text-gray-900 font-bold grid sm:grid-cols-2 gap-2">
                     <button
                       className="px-5 py-4 rounded-md bg-green-400 w-full"
@@ -148,7 +133,7 @@ function AddDirectorPopup() {
                     <button
                       className="px-5 py-4 rounded-md bg-orange-400 w-full"
                       onClick={() => {
-                        setShowDirectorPopup(false);
+                        handleShowUpdatePopup();
                       }}
                     >
                       Cancel
@@ -164,4 +149,4 @@ function AddDirectorPopup() {
   );
 }
 
-export default AddDirectorPopup;
+export default UpdateQuotesPopup;
