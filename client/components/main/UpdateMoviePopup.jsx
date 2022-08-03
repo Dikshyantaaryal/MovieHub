@@ -44,6 +44,7 @@ const customStyles = {
 
 function UpdateMoviePopup({ handleEditMovieCancel, singleMovie }) {
   const [allCompanies, setAllCompanies] = useState([]);
+  const [allGenres, setAllGenres] = useState([]);
   const router = useRouter();
   const {
     query: { slug },
@@ -56,19 +57,24 @@ function UpdateMoviePopup({ handleEditMovieCancel, singleMovie }) {
     };
   });
 
-  const genresOptions = [
-    { value: "Genre1", label: "Genre1" },
-    { value: "Genre2", label: "Genre2" },
-    { value: "Genre3", label: "Genre3" },
-    { value: "Genre4", label: "Genre4" },
-  ];
+  const genresOptions = allGenres.map((singleGenre) => {
+    return {
+      value: singleGenre.genre,
+      label: singleGenre.genre,
+    };
+  });
 
   useEffect(() => {
     const fetchCompanies = async () => {
       const response = await axios.get("http://localhost:3001/companies");
       setAllCompanies(response.data);
     };
+    const fetchGenres = async () => {
+      const response = await axios.get("http://localhost:3001/genres");
+      setAllGenres(response.data);
+    };
     fetchCompanies();
+    fetchGenres();
   }, []);
   return (
     <>
@@ -80,7 +86,6 @@ function UpdateMoviePopup({ handleEditMovieCancel, singleMovie }) {
             initialValues={singleMovie}
             validationSchema={requiredSchema}
             onSubmit={async (values) => {
-              console.log(values);
               try {
                 const response = await axios.put(
                   `http://localhost:3001/movies/${slug}`,
@@ -91,6 +96,7 @@ function UpdateMoviePopup({ handleEditMovieCancel, singleMovie }) {
                     router.reload(`/movie/${slug}`);
                   }, 3500),
                 });
+                console.log(values);
               } catch {
                 toast.error("Failed to add movie.");
               }
@@ -164,9 +170,14 @@ function UpdateMoviePopup({ handleEditMovieCancel, singleMovie }) {
                       <label htmlFor="">Genres</label>
                       <Select
                         options={genresOptions}
+                        isMulti
                         styles={customStyles}
                         onChange={(selectedOption) => {
-                          setFieldValue("genres", selectedOption.value);
+                          const datas = selectedOption.map((singleVal) => {
+                            return singleVal.value;
+                          });
+
+                          setFieldValue("genres", datas.toString());
                         }}
                       />
                     </div>

@@ -3,16 +3,18 @@ import { Formik, Form, Field, ErrorMessage } from "formik";
 import { ToastContainer, toast } from "react-toastify";
 import { useRouter } from "next/router";
 import * as Yup from "yup";
+import Select from "react-select";
 import axios from "axios";
 import "react-toastify/dist/ReactToastify.css";
+import QuotesPopupContext from "../contexts/QuotesPopupContext";
 import slugify from "slugify";
 
 /**
  * Validation Schema added.
  */
 const requiredSchema = Yup.object({
-  company_name: Yup.string().required(),
-  address: Yup.string().required(),
+  role_played: Yup.string().required(),
+  quote: Yup.string().required(),
 });
 
 /**
@@ -38,9 +40,25 @@ const customStyles = {
   }),
 };
 
-function UpdateCompanyPopup({ singleCompany, handleShowUpdatePopup }) {
-  const companySlug = slugify(singleCompany.company_name);
+function UpdateQuotesPopup({ singleQuote, handleShowUpdatePopup }) {
+  const quoteSlug = slugify(singleQuote.role_played);
+  const { showQuotesPopup, setShowQuotesPopup } =
+    useContext(QuotesPopupContext);
   const router = useRouter();
+  const [allRoles, setAllRoles] = useState([]);
+  const roleOptions = allRoles.map((singleRole) => {
+    return {
+      value: singleRole.role_played,
+      label: singleRole.role_played,
+    };
+  });
+  useEffect(() => {
+    const fetchRoles = async () => {
+      const response = await axios.get("http://localhost:3001/casts");
+      setAllRoles(response.data);
+    };
+    fetchRoles();
+  }, []);
 
   return (
     <>
@@ -50,23 +68,23 @@ function UpdateCompanyPopup({ singleCompany, handleShowUpdatePopup }) {
           {/* All about the form to add the movie */}
           <Formik
             initialValues={{
-              company_name: singleCompany.company_name,
-              address: singleCompany.address,
+              role_played: singleQuote.role_played,
+              quote: singleQuote.quote,
             }}
             validationSchema={requiredSchema}
             onSubmit={async (values) => {
               try {
                 const response = await axios.put(
-                  `http://localhost:3001/companies/${companySlug}`,
+                  `http://localhost:3001/quotes/${quoteSlug}`,
                   values
                 );
-                toast.success("Company Updated successfully!", {
+                toast.success("Quotes updated successfully!", {
                   onClose: setTimeout(() => {
-                    router.reload("/");
+                    router.reload("/quotes");
                   }, 3500),
                 });
               } catch {
-                toast.error("Failed to update movie.");
+                toast.error("Failed to add quote.");
               }
             }}
           >
@@ -74,14 +92,17 @@ function UpdateCompanyPopup({ singleCompany, handleShowUpdatePopup }) {
               return (
                 <Form className="space-y-3">
                   <div className="space-y-2">
-                    <label htmlFor="">Company Name</label>
-                    <Field
-                      type="text"
-                      name="company_name"
-                      autoComplete="off"
-                      className="w-full px-3 py-2 border-none bg-gray-800 outline-none"
-                      disabled
-                    ></Field>
+                    <div className="flex flex-col space-y-2">
+                      <label htmlFor="">Role Played</label>
+                      <Select
+                        options={roleOptions}
+                        onChange={(selectedOption) => {
+                          setFieldValue("role_played", selectedOption.value);
+                        }}
+                        styles={customStyles}
+                        isDisabled
+                      />
+                    </div>
                     <ErrorMessage
                       name="company_name"
                       component="p"
@@ -89,15 +110,14 @@ function UpdateCompanyPopup({ singleCompany, handleShowUpdatePopup }) {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label htmlFor="">Company Address</label>
+                    <label htmlFor="">Quote</label>
                     <Field
-                      type="text"
-                      name="address"
-                      autoComplete="off"
-                      className="w-full px-3 py-2 border-none bg-gray-800 outline-none"
+                      as="textarea"
+                      name="quote"
+                      className="w-full px-3 py-2 border-none bg-gray-800 outline-none min-h-[120px] resize-none"
                     ></Field>
                     <ErrorMessage
-                      name="address"
+                      name="quote"
                       component="p"
                       className="text-red-400"
                     />
@@ -113,7 +133,7 @@ function UpdateCompanyPopup({ singleCompany, handleShowUpdatePopup }) {
                     <button
                       className="px-5 py-4 rounded-md bg-orange-400 w-full"
                       onClick={() => {
-                        handleShowUpdatePopup(false);
+                        handleShowUpdatePopup();
                       }}
                     >
                       Cancel
@@ -129,4 +149,4 @@ function UpdateCompanyPopup({ singleCompany, handleShowUpdatePopup }) {
   );
 }
 
-export default UpdateCompanyPopup;
+export default UpdateQuotesPopup;

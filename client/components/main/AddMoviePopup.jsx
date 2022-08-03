@@ -17,7 +17,7 @@ const requiredSchema = Yup.object({
   year_of_release: Yup.number().required(),
   plot_outline: Yup.string().required(),
   company_name: Yup.string().required(),
-  genre: Yup.string().required(),
+  genres: Yup.string().required(),
 });
 
 /**
@@ -87,18 +87,15 @@ function AddMoviePopup() {
               year_of_release: "",
               plot_outline: "",
               company_name: "",
-              genre: "",
+              genres: "",
             }}
             validationSchema={requiredSchema}
             onSubmit={async (values) => {
-              console.log(values);
               try {
                 const response = await axios.post(
                   "http://localhost:3001",
                   values
                 );
-                console.log(response.data);
-                console.log(values);
                 toast.success("Movie added successfully!", {
                   onClose: setTimeout(() => {
                     router.reload("/");
@@ -183,7 +180,7 @@ function AddMoviePopup() {
                             return singleVal.value;
                           });
 
-                          setFieldValue("genre", datas.toString());
+                          setFieldValue("genres", datas.toString());
                         }}
                       />
                     </div>
